@@ -5,4 +5,25 @@ output: html_notebook
 
 ## Autokláv riport
 
-Log fájl:
+
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+library(stringr)
+library(tidyverse)
+library(lubridate)
+library(ggplot2)
+library(plotly)
+library(xts)
+library(dygraphs)
+#library(knitr)
+library(hms)
+```
+
+```{r, include=FALSE}
+#run <- as.list("")
+datafile <- "data/AU6801-NA1092AL00257.LOG"
+autxt <- read_file(datafile)
+s <- str_split(autxt, "\n")[[1]]   #sorokra tördeljük    #s[c(2:8, 16:19)]
+inf <- str_subset(s, "^ ")
+```
+
+Log fájl: `r datafile`  
