@@ -24,17 +24,20 @@ datafile <- "data/AU6801-NA1092AL00259.LOG"
 autxt <- read_file(datafile)
 s <- str_split(autxt, "\n")[[1]]   #sorokra tördeljük    #s[c(2:8, 16:19)]
 inf <- str_subset(s, "^ ")
+prt_par <- function(par){
+  inf %>% str_subset(par) %>% str_split("[ ]{2,}") %>% .[[1]] %>% .[2]
+}
 ```
 
 Log fájl: `r datafile`  
 
-Sterilizáló : `r inf %>% str_subset("\\sSTERILIZALO") %>% str_split("[ ]{2,}") %>% .[[1]] %>% .[2]`  
-PROGRAM KEZD.IDO : `r inf %>% str_subset("\\sPROGRAM KEZD.IDO") %>% str_split("[ ]{2,}") %>% .[[1]] %>% .[2]`  
-PROGRAM : `r inf %>% str_subset("\\sPROGRAM") %>% str_split("[ ]{2,}") %>% .[[1]] %>% .[2]`  
+Sterilizáló : `r prt_par("\\sSTERILIZALO")`  
+PROGRAM KEZD.IDO : `r prt_par("\\sPROGRAM KEZD.IDO")`  
+PROGRAM : `r prt_par("\\sPROGRAM")`  
 Ciklus : `r inf[2]`  
-TERMEK KOD : __`r inf %>% str_subset("\\sTERMEK KOD") %>% str_split("[ ]{2,}") %>% .[[1]] %>% .[2]`__  
-SARZSSZAM : `r inf %>% str_subset("\\sSARZSSZAM") %>% str_split("[ ]{2,}") %>% .[[1]] %>% .[2]`  
-ID.STERILIZALO : `r inf %>% str_subset("\\sID.STERILIZALO") %>% str_split("[ ]{2,}") %>% .[[1]] %>% .[2]`  
+TERMEK KOD : __`r prt_par("\\sTERMEK KOD")`__    
+SARZSSZAM : `r prt_par("\\sSARZSSZAM")`  
+ID.STERILIZALO : `r prt_par("\\sID.STERILIZALO")`  
 MIN.STERIL.HOMERSEKLET : `r inf %>% str_subset("\\sMIN.STERIL.HOMERSEKLET") %>% str_split("[ ]{2,}") %>% .[[1]] %>% .[3]`  
 MAX.STERIL.HOMERSEKLET : `r inf %>% str_subset("\\sMAX.STERIL.HOMERSEKLET") %>% str_split("[ ]{2,}") %>% .[[1]] %>% .[3]`  
 
