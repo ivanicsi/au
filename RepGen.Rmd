@@ -19,11 +19,71 @@ library(hms)
 ```
 
 ```{r, include=FALSE}
-#run <- as.list("")
-datafile <- "data/AU6801-NA1092AL00257.LOG"
+datafile <- "data/AU6801-NA1092AL00259.LOG"
+#datafile <- "data/AU6801-NA1092AL00257.LOG"
 autxt <- read_file(datafile)
 s <- str_split(autxt, "\n")[[1]]   #sorokra tördeljük    #s[c(2:8, 16:19)]
 inf <- str_subset(s, "^ ")
 ```
 
 Log fájl: `r datafile`  
+
+Sterilizáló : `r inf %>% str_subset("\\sSTERILIZALO") %>% str_split("[ ]{2,}") %>% .[[1]] %>% .[2]`  
+PROGRAM KEZD.IDO : `r inf %>% str_subset("\\sPROGRAM KEZD.IDO") %>% str_split("[ ]{2,}") %>% .[[1]] %>% .[2]`  
+PROGRAM : `r inf %>% str_subset("\\sPROGRAM") %>% str_split("[ ]{2,}") %>% .[[1]] %>% .[2]`  
+Ciklus : `r inf[2]`  
+TERMEK KOD : __`r inf %>% str_subset("\\sTERMEK KOD") %>% str_split("[ ]{2,}") %>% .[[1]] %>% .[2]`__  
+SARZSSZAM : `r inf %>% str_subset("\\sSARZSSZAM") %>% str_split("[ ]{2,}") %>% .[[1]] %>% .[2]`  
+ID.STERILIZALO : `r inf %>% str_subset("\\sID.STERILIZALO") %>% str_split("[ ]{2,}") %>% .[[1]] %>% .[2]`  
+MIN.STERIL.HOMERSEKLET : `r inf %>% str_subset("\\sMIN.STERIL.HOMERSEKLET") %>% str_split("[ ]{2,}") %>% .[[1]] %>% .[3]`  
+MAX.STERIL.HOMERSEKLET : `r inf %>% str_subset("\\sMAX.STERIL.HOMERSEKLET") %>% str_split("[ ]{2,}") %>% .[[1]] %>% .[3]`  
+
+```{r, include=FALSE}
+f <-  str_split(autxt, "\\+\n")[[1]]
+phase <- data.frame()
+for( phaseIdx in 2:length(f) ){
+  fl <- str_split(f[phaseIdx], "\n")[[1]]
+  ph <- str_replace( str_replace( str_split(fl[1], "=")[[1]][2], "(^\\s)", ""), "[ ]+$", "")
+  fld <- data.frame(fl)
+  
+  phase2 <- fld %>% 
+    filter( (str_length(str_split(fl, " +", n = 2, simplify = TRUE)[,1]) == 1) & str_detect(fl, "#|\\$|\\+|@") ) %>%
+    separate(fl, c("a", "t_", "p_", "te1", "te2", "te3", "te6"), "[ ]{1,}", extra = "drop", fill = "right") %>%
+    separate(t_, c("m", "s"), ":" ) %>%
+   
+    transmute( t = make_datetime( hour = as.numeric(m) %/% 60, min = as.numeric(m) %% 60, sec = as.numeric(s) ), p = as.numeric(p_), TE1 = as.numeric(te1), TE2 = as.numeric(te2), TE3 = as.numeric(te3), TE6 = as.numeric(te6), ph = ph, idx = phaseIdx-1 )
+  phase <- rbind(phase, phase2) 
+}
+phase$ido <- format(phase$t, "%H:%M:%S")
+```
+
+```{r}
+phase  %>% select( ido, p, TE1, TE2, TE3, TE6, ph, idx)
+```
+
+```{r, echo=FALSE}
+phLim <- phase %>% group_by(idx, ph) %>% summarise( start = min(t), end = max(t) ) %>% arrange(start)
+table3<-xts(select(phase, -idx, -ph, -ido)[,-1],order.by=phase$t)
+ribbonData <- as.factor(phase$idx )
+dygraph(table3, main="Autokláv ciklus", ylab="hőmérséklet [°C]") %>% 
+  dyRibbon(data = ribbonData, top = 1.0, bottom = 0.7, palette = c("#efefef", "#ffe6e6", "#ccebd6", "1F1FFF", "lightgreen", "azure", "khaki", "orange", "khaki", "lightblue", "khaki", "lightgreen", "khaki", "orange", "khaki")) %>%
+  #dyRibbon(data = ribbonData, top = 1.0, bottom = 0.7, palette = terrain.colors(30) ) %>%
+  dyEvent(phLim$start, phLim$ph, labelLoc = "bottom") %>%
+  dyOptions(colors = RColorBrewer::brewer.pal(8, "Dark2")) %>%
+  #dyRangeSelector() %>%
+  dySeries("p", axis = 'y2') %>%
+  dyAxis("y2", label = "nyomás [bar]") %>%
+  dyAxis("x", label = "idő") %>%
+  dyLegend(width = 600)
+```
+
+```{r, echo=FALSE}
+phaseList <- phase %>% 
+       group_by(idx, ph) %>% summarise( start = min(t), end = max(t), len = end-start ) %>%
+       arrange(start) 
+phaseList$startf <- format(phaseList$start, "%H:%M:%S")
+phaseList$endf <- format(phaseList$end, "%H:%M:%S")
+phaseList$lenf <- format(as_datetime( phaseList$len), "%H:%M:%S")
+phaseList <- phaseList %>% select(idx, ph, startf, endf, lenf)
+phaseList 
+```
