@@ -44,7 +44,11 @@ MAX.STERIL.HOMERSEKLET : `r inf %>% str_subset("\\sMAX.STERIL.HOMERSEKLET") %>% 
 ```{r, include=FALSE}
 f <-  str_split(autxt, "\\+\n")[[1]]
 phase <- data.frame()
-for( phaseIdx in 2:length(f) ){
+for( phaseIdx in 3:length(f) ){
+  #az 1. az nem fázis, hanem a paraméterek, 
+  #a 2. az az autokláv előkészítést tartalmazza, ahol nem történik "semmi", 
+  #de az idő újra indul nulláról utána 
+  #ezért a 3-tól kezdjük kiértékelni
   fl <- str_split(f[phaseIdx], "\n")[[1]]
   ph <- str_replace( str_replace( str_split(fl[1], "=")[[1]][2], "(^\\s)", ""), "[ ]+$", "")
   fld <- data.frame(fl)
