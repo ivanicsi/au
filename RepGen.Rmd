@@ -50,7 +50,13 @@ for( phaseIdx in 2:length(f) ){
   fld <- data.frame(fl)
   
   phase2 <- fld %>% 
-    filter( (str_length(str_split(fl, " +", n = 2, simplify = TRUE)[,1]) == 1) & str_detect(fl, "#|\\$|\\+|@") ) %>%
+    filter( 
+      #első karakter után szóköz van
+      (str_length(str_split(fl, " +", n = 2, simplify = TRUE)[,1]) == 1) & 
+        #ezek valamelyike az első karakter
+        str_detect(fl, "#|\\$|\\+|@" )  & 
+        #hogy az F0 értékeket ne olvassa be, mert az első az így kezdődik: "+   F"
+        !str_detect(fl, "[F]") ) %>%
     separate(fl, c("a", "t_", "p_", "te1", "te2", "te3", "te6"), "[ ]{1,}", extra = "drop", fill = "right") %>%
     separate(t_, c("m", "s"), ":" ) %>%
    
@@ -73,7 +79,7 @@ dygraph(table3, main="Autokláv ciklus", ylab="hőmérséklet [°C]") %>%
   #dyRibbon(data = ribbonData, top = 1.0, bottom = 0.7, palette = terrain.colors(30) ) %>%
   dyEvent(phLim$start, phLim$ph, labelLoc = "bottom") %>%
   dyOptions(colors = RColorBrewer::brewer.pal(8, "Dark2")) %>%
-  #dyRangeSelector() %>%
+  dyRangeSelector() %>%
   dySeries("p", axis = 'y2') %>%
   dyAxis("y2", label = "nyomás [bar]") %>%
   dyAxis("x", label = "idő") %>%
